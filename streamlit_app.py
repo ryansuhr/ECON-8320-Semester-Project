@@ -6,83 +6,104 @@ st.write(
 )
 st.write("hello!")
 
+import pandas as pd
 import requests
 import json
 import pandas as pd
+import datetime
 import os
 
-# File path for local caching
-CACHE_FILE = "bls_data.json"
+#get the current year
+current_year = datetime.datetime.now().year
 
+#create file paths for local caching
+CACHE_FILE = "bls_data.json"
+CSV_FILE = "bls_data.csv"
+
+#define a BLS data-fetching function
 def fetch_bls_data_offline():
-    # Check if cached file exists
-    if os.path.exists(CACHE_FILE):
+    #check if CSV exists
+    if os.path.exists(CSV_FILE):
+        st.write("Loading data from CSV file.")
+        return pd.read_csv(CSV_FILE)
+
+    #check if JSON cache exists
+    elif os.path.exists(CACHE_FILE):
+        st.write("Loading data from JSON cache.")
         with open(CACHE_FILE, "r") as f:
-            return json.load(f)  # Load data from file
+            json_data = json.load(f)
+            return parse_bls_json(json_data)
+
     else:
-        # If file doesn't exist, fetch data from API
+        #if neither exists, fetch data from API
+        st.write("Fetching data from API.")
         headers = {'Content-type': 'application/json'}
         data = json.dumps({
             "seriesid": ['LNS12000000', 'LNS13000000', 'LNS14000000', 'CES0000000001'],
-            "startyear": "2023", 
-            "endyear": "2024"
+            "startyear": "1994", 
+            "endyear": str(current_year)
         })
         response = requests.post(
             'https://api.bls.gov/publicAPI/v1/timeseries/data/',
             data=data,
             headers=headers
         )
-        response.raise_for_status()  # Raise error for failed requests
+        response.raise_for_status()  #raise error for failed requests
         json_data = response.json()
 
-        # Save the response locally
+        #save the JSON response locally
         with open(CACHE_FILE, "w") as f:
             json.dump(json_data, f)
 
-        return json_data
+        #parse and save to CSV
+        df = parse_bls_json(json_data)
+        df.to_csv(CSV_FILE, index=False)
+        return df
 
-# Use the offline-aware function to get data
-json_data = fetch_bls_data_offline()
+#function to parse BLS JSON data into a DataFrame
+def parse_bls_json(json_data):
+    #create an empty list to store parsed data
+    parsed_data = []
 
-#create an empty list to store parsed data
-parsed_data = []
-
-#create a naming system for each 'period'
-period_to_month = {
-    'M01': 'January',
-    'M02': 'February',
-    'M03': 'March',
-    'M04': 'April',
-    'M05': 'May',
-    'M06': 'June',
-    'M07': 'July',
-    'M08': 'August',
-    'M09': 'September',
-    'M10': 'October',
-    'M11': 'November',
-    'M12': 'December'
+    #mapping for periods to months
+    period_to_month = {
+        'M01': 'January',
+        'M02': 'February',
+        'M03': 'March',
+        'M04': 'April',
+        'M05': 'May',
+        'M06': 'June',
+        'M07': 'July',
+        'M08': 'August',
+        'M09': 'September',
+        'M10': 'October',
+        'M11': 'November',
+        'M12': 'December'
 }
 
-#parse the BLS data
-for series in json_data['Results']['series']:
-    series_id = series['seriesID']
-    for item in series['data']:
-        year = item['year']
-        period = item['period']
-        value = item['value']
+    #parse the BLS data
+    for series in json_data['Results']['series']:
+        series_id = series['seriesID']
+        for item in series['data']:
+            year = item['year']
+            period = item['period']
+            value = item['value']
 
-        month = period_to_month.get(period, None) #implement the naming system
+            month = period_to_month.get(period, None) #implement the naming system
 
-        parsed_data.append({
-            "series_id": series_id,
-            "year": year,
-            "period": period,
-            "month": month,
-            "value": value,
-        })
+            parsed_data.append({
+                "series_id": series_id,
+                "year": year,
+                "period": period,
+                "month": month,
+                "value": value,
+            })
 
-#create a DataFrame using the parsed data
-df = pd.DataFrame(parsed_data, index=None, columns=['year', 'month', 'series_id', 'value'])
+    #create and return a DataFrame
+    return pd.DataFrame(parsed_data)
+
+#fetch and parse the BLS data
+df = fetch_bls_data_offline()
 
 #pivot the DataFrame so that each 'series_id' becomes its own column of values 
 pivot_df = df.pivot(index=['year', 'month'], columns='series_id', values='value')
@@ -136,8 +157,21 @@ filtered_df['year'] = filtered_df['year'].astype(str)
 #drop the index
 filtered_df.reset_index(drop=True, inplace=True)
 
-#make the revised DataFrame a Streamlit object
-st.dataframe(filtered_df)
+#Add a title
+#st.title("Employment and Unemployment Data")
 
-#make a linechart
-#st.line_chart(sorted_df, x='Date', y=['Civillian Employment (thousands)', 'Civillian Unemployment (thousands)', 'Total Nonfarm Employment (thousands)'])
+#create two columns to divide elements on the Streamlit app
+left_column, right_column = st.columns(2)
+
+#define each column
+with left_column:
+  st.header("This is a header with a divider", divider=True)
+  st.subheader("_This is a subheader (in italics)_")
+  #st.dataframe(filtered_df)
+  st.caption("This is a caption")
+
+with right_column:
+  st.header("This is a header with a divider", divider=True)
+  st.subheader("_This is a subheader (in italics)_")
+  #st.line_chart(filtered_df, x='Date', y=['Civillian Employment (thousands)', 'Civillian Unemployment (thousands)', 'Total Nonfarm Employment (thousands)'])
+  st.caption("This is a caption")

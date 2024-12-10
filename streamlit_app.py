@@ -1,5 +1,8 @@
 import streamlit as st
 
+#enable wide mode
+st.set_page_config(layout="wide")
+
 st.title("🎈 My new Streamlit app")
 st.write(
     "Let's start building! For help and inspiration, head over to [docs.streamlit.io](https://docs.streamlit.io/)."
@@ -24,19 +27,19 @@ CSV_FILE = "bls_data.csv"
 def fetch_bls_data_offline():
     #check if CSV exists
     if os.path.exists(CSV_FILE):
-        st.write("Loading data from CSV file.")
+        #st.write("Loading data from CSV file.")
         return pd.read_csv(CSV_FILE)
 
     #check if JSON cache exists
     elif os.path.exists(CACHE_FILE):
-        st.write("Loading data from JSON cache.")
+        #st.write("Loading data from JSON cache.")
         with open(CACHE_FILE, "r") as f:
             json_data = json.load(f)
             return parse_bls_json(json_data)
 
     else:
         #if neither exists, fetch data from API
-        st.write("Fetching data from API.")
+        #st.write("Fetching data from API.")
         headers = {'Content-type': 'application/json'}
         data = json.dumps({
             "seriesid": ['LNS12000000', 'LNS13000000', 'LNS14000000', 'CES0000000001'],
@@ -131,10 +134,10 @@ for col in numeric_columns:
 
 #rename each 'series_id' to its actual name
 sorted_df.rename(columns={
-    'LNS12000000': 'Civillian Employment (thousands)',
-    'LNS13000000': 'Civillian Unemployment (thousands)',
-    'LNS14000000': 'Unemployment Rate (%)',
-    'CES0000000001': 'Total Nonfarm Employment (thousands)'
+    'LNS12000000': 'Civillian Employment*',
+    'LNS13000000': 'Civillian Unemployment*',
+    'LNS14000000': 'Unemployment Rate',
+    'CES0000000001': 'Total Nonfarm Employment*'
     }, inplace=True)
 
 #convert 'year' from a string to a number to be able to apply a filter
@@ -142,7 +145,7 @@ sorted_df['year'] = pd.to_numeric(sorted_df['year'])
 
 #create a slider to filter the data
 year_range = st.slider(
-    'Filter by year',
+    'Filter data by year:',
     min_value=int(sorted_df['year'].min()),
     max_value=int(sorted_df['year'].max()),
     value=(int(sorted_df['year'].min()), int(sorted_df['year'].max()))
@@ -157,21 +160,16 @@ filtered_df['year'] = filtered_df['year'].astype(str)
 #drop the index
 filtered_df.reset_index(drop=True, inplace=True)
 
-#Add a title
-#st.title("Employment and Unemployment Data")
-
 #create two columns to divide elements on the Streamlit app
 left_column, right_column = st.columns(2)
 
 #define each column
 with left_column:
-  st.header("This is a header with a divider", divider=True)
-  st.subheader("_This is a subheader (in italics)_")
-  #st.dataframe(filtered_df)
-  st.caption("This is a caption")
+  st.subheader("BLS Employment Data, 1984-Present")
+  st.dataframe(filtered_df)
+  st.caption("_*in Thousands_")
 
 with right_column:
-  st.header("This is a header with a divider", divider=True)
-  st.subheader("_This is a subheader (in italics)_")
-  #st.line_chart(filtered_df, x='Date', y=['Civillian Employment (thousands)', 'Civillian Unemployment (thousands)', 'Total Nonfarm Employment (thousands)'])
+  st.subheader("Unemployment Rate by Month")
+  st.line_chart(filtered_df, x='Date', y='Unemployment Rate')
   st.caption("This is a caption")

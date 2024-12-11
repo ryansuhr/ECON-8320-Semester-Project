@@ -1,106 +1,19 @@
 import streamlit as st
+import pandas as pd
+import os
 
 #enable wide mode
 st.set_page_config(layout="wide")
 
-import pandas as pd
-import requests
-import json
-import pandas as pd
-import datetime
-import os
+#path to the data file
+CSV_FILE = "data/bls_data.csv"
 
-#get the current year
-current_year = datetime.datetime.now().year
-
-#create file paths for local caching
-CACHE_FILE = "bls_data.json"
-CSV_FILE = "bls_data.csv"
-
-#define a BLS data-fetching function
-def fetch_bls_data_offline():
-    #check if CSV exists
-    if os.path.exists(CSV_FILE):
-        #st.write("Loading data from CSV file.")
-        return pd.read_csv(CSV_FILE)
-
-    #check if JSON cache exists
-    elif os.path.exists(CACHE_FILE):
-        #st.write("Loading data from JSON cache.")
-        with open(CACHE_FILE, "r") as f:
-            json_data = json.load(f)
-            return parse_bls_json(json_data)
-
-    else:
-        #if neither exists, fetch data from API
-        #st.write("Fetching data from API.")
-        headers = {'Content-type': 'application/json'}
-        data = json.dumps({
-            "seriesid": ['LNS11000000', 'LNS12000000', 'LNS13000000', 'LNS14000000', 'CES0000000001'],
-            "startyear": "1994", 
-            "endyear": str(current_year)
-        })
-        response = requests.post(
-            'https://api.bls.gov/publicAPI/v1/timeseries/data/',
-            data=data,
-            headers=headers
-        )
-        response.raise_for_status()  #raise error for failed requests
-        json_data = response.json()
-
-        #save the JSON response locally
-        with open(CACHE_FILE, "w") as f:
-            json.dump(json_data, f)
-
-        #parse and save to CSV
-        df = parse_bls_json(json_data)
-        df.to_csv(CSV_FILE, index=False)
-        return df
-
-#function to parse BLS JSON data into a DataFrame
-def parse_bls_json(json_data):
-    #create an empty list to store parsed data
-    parsed_data = []
-
-    #mapping for periods to months
-    period_to_month = {
-        'M01': 'January',
-        'M02': 'February',
-        'M03': 'March',
-        'M04': 'April',
-        'M05': 'May',
-        'M06': 'June',
-        'M07': 'July',
-        'M08': 'August',
-        'M09': 'September',
-        'M10': 'October',
-        'M11': 'November',
-        'M12': 'December'
-}
-
-    #parse the BLS data
-    for series in json_data['Results']['series']:
-        series_id = series['seriesID']
-        for item in series['data']:
-            year = item['year']
-            period = item['period']
-            value = item['value']
-
-            month = period_to_month.get(period, None) #implement the naming system
-
-            parsed_data.append({
-                "series_id": series_id,
-                "year": year,
-                "period": period,
-                "month": month,
-                "value": value,
-            })
-
-    #create and return a DataFrame
-    return pd.DataFrame(parsed_data)
-
-#fetch and parse the BLS data
-df = fetch_bls_data_offline()
+#load the data
+if os.path.exists(CSV_FILE):
+    df = pd.read_csv(CSV_FILE)
+    st.write("Data loaded successfully!")
+else:
+    st.error("Data file not found. Please run the update script.")
 
 #pivot the DataFrame so that each 'series_id' becomes its own column of values 
 pivoted_df = df.pivot(index=['year', 'month'], columns='series_id', values='value')
@@ -223,4 +136,3 @@ elif page == "Unemployment Data":
         st.subheader("Unemployment Rate")
         st.line_chart(unempl_df, x='year', y='Unemployment Rate')
         st.caption("This is a caption! Change me or remove me, please!")
-        

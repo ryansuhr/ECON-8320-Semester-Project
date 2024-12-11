@@ -3,12 +3,6 @@ import streamlit as st
 #enable wide mode
 st.set_page_config(layout="wide")
 
-st.title("🎈 My new Streamlit app")
-st.write(
-    "Let's start building! For help and inspiration, head over to [docs.streamlit.io](https://docs.streamlit.io/)."
-)
-st.write("hello!")
-
 import pandas as pd
 import requests
 import json
@@ -42,7 +36,7 @@ def fetch_bls_data_offline():
         #st.write("Fetching data from API.")
         headers = {'Content-type': 'application/json'}
         data = json.dumps({
-            "seriesid": ['LNS12000000', 'LNS13000000', 'LNS14000000', 'CES0000000001'],
+            "seriesid": ['LNS11000000', 'LNS12000000', 'LNS13000000', 'LNS14000000', 'CES0000000001'],
             "startyear": "1994", 
             "endyear": str(current_year)
         })
@@ -109,31 +103,32 @@ def parse_bls_json(json_data):
 df = fetch_bls_data_offline()
 
 #pivot the DataFrame so that each 'series_id' becomes its own column of values 
-pivot_df = df.pivot(index=['year', 'month'], columns='series_id', values='value')
+pivoted_df = df.pivot(index=['year', 'month'], columns='series_id', values='value')
 
 # Ensure 'year' and 'month' exist in the MultiIndex
-if 'year' not in pivot_df.index.names or 'month' not in pivot_df.index.names:
+if 'year' not in pivoted_df.index.names or 'month' not in pivoted_df.index.names:
     raise ValueError("The pivot operation failed to include 'year' or 'month' in the index.")
 
 #create a 'Date' column for chronological sorting
-pivot_df['Date'] = pd.to_datetime(pivot_df.index.get_level_values('year').astype(str)
+pivoted_df['Date'] = pd.to_datetime(pivoted_df.index.get_level_values('year').astype(str)
     + '-'
-    + pivot_df.index.get_level_values('month').astype(str))
+    + pivoted_df.index.get_level_values('month').astype(str))
 
 #use 'Date' to sort the Dataframe chronologically
-sorted_df = pivot_df.sort_values(by=['Date'])
+sorted_df = pivoted_df.sort_values(by=['Date'])
 
 #reset the index ('year' and 'month' are now their own columns - removed from the multiindex)
 sorted_df = sorted_df.reset_index()
 
 #convert all data values from strings to numbers for better readability
-numeric_columns = ['LNS12000000', 'LNS13000000', 'LNS14000000', 'CES0000000001']
+numeric_columns = ['LNS11000000', 'LNS12000000', 'LNS13000000', 'LNS14000000', 'CES0000000001']
 for col in numeric_columns:
     if col in sorted_df.columns:
         sorted_df[col] = pd.to_numeric(sorted_df[col], errors='coerce')
 
 #rename each 'series_id' to its actual name
 sorted_df.rename(columns={
+    'LNS11000000': 'Civillian Labor Force*',
     'LNS12000000': 'Civillian Employment*',
     'LNS13000000': 'Civillian Unemployment*',
     'LNS14000000': 'Unemployment Rate',
@@ -157,19 +152,48 @@ filtered_df = sorted_df[(sorted_df['year'] >= year_range[0]) & (sorted_df['year'
 #convert 'year' back to a string to avoid commas in the DataFrame
 filtered_df['year'] = filtered_df['year'].astype(str)
 
-#drop the index
-filtered_df.reset_index(drop=True, inplace=True)
+#create a sidebar navigation
+st.sidebar.title("Navigation")
+page = st.sidebar.selectbox("Select a page:", ["Welcome Page", "Employment Data", "Unemployment Data"])
 
-#create two columns to divide elements on the Streamlit app
-left_column, right_column = st.columns(2)
+#Welcome Page
+if page == "Welcome Page":
+    st.title("Howdy, stranger! :face_with_cowboy_hat:")
+    st.write(
+        "Hello, and welcome to my page! Here, I've compiled some employment data from the US Bureau of Labor Statistics. If you use the navigation sidebar to your left, you'll see two pages: one is Employment Data and the other Unemployment Data. Click on one of those to start exploring. Giddy-up!"
+    )
+#Employment Page
+if page == "Employment Data":
+    st.title("Employment Data")
+    left_column, right_column = st.columns(2)
+    with left_column:
+        st.subheader("BLS Employment Data, 1994-Present")
+        st.dataframe(filtered_df)
+        st.caption("_*in Thousands_")
 
-#define each column
-with left_column:
-  st.subheader("BLS Employment Data, 1984-Present")
-  st.dataframe(filtered_df)
-  st.caption("_*in Thousands_")
+    with right_column:
+        st.subheader("Employment Trends")
+        #st.line_chart(filtered_df, x='Year', y='Unemployment Rate')
+        st.caption("This is a caption! Change me or remove me, please!")
 
-with right_column:
-  st.subheader("Unemployment Rate by Month")
-  st.line_chart(filtered_df, x='Date', y='Unemployment Rate')
-  st.caption("This is a caption")
+#Unemployment Page
+elif page == "Unemployment Data":
+    st.title("Unemployment Data")
+    left_column, right_column = st.columns(2)
+    with left_column:
+        st.subheader("BLS Unemployment Data, 1994-Present")
+        st.dataframe(filtered_df)
+        st.caption("_*in Thousands_")
+
+    with right_column:
+        st.subheader("Unemployment Rate")
+        st.line_chart(filtered_df, x='Year', y='Unemployment Rate')
+        st.caption("This is a caption! Change me or remove me, please!")
+
+#create a copy of the DataFrame with Employment Data only
+#employment_df = sorted_df.copy()
+#employment_df.drop(columns=['Civillian Unemployment*']['Unemployment Rate']['Date'], inplace=True)
+
+#create a copt of the DataFrame with Unemployment Data only
+#unemployment_df = sorted_df.copy()
+#employment_df.drop(columns=['Total Nonfarm Employment*']['Civillian Employment*']['Date'], inplace=True)

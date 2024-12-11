@@ -138,20 +138,6 @@ sorted_df.rename(columns={
 #convert 'year' from a string to a number to be able to apply a filter
 sorted_df['year'] = pd.to_numeric(sorted_df['year'])
 
-#create a slider to filter the data
-year_range = st.slider(
-    'Filter data by year:',
-    min_value=int(sorted_df['year'].min()),
-    max_value=int(sorted_df['year'].max()),
-    value=(int(sorted_df['year'].min()), int(sorted_df['year'].max()))
-)
-
-#add the slider to the Streamlit DataFrame
-filtered_df = sorted_df[(sorted_df['year'] >= year_range[0]) & (sorted_df['year'] <= year_range[1])]
-
-#convert 'year' back to a string to avoid commas in the DataFrame
-filtered_df['year'] = filtered_df['year'].astype(str)
-
 #create a sidebar navigation
 st.sidebar.title("Navigation")
 page = st.sidebar.selectbox("Select a page:", ["Welcome Page", "Employment Data", "Unemployment Data"])
@@ -165,35 +151,76 @@ if page == "Welcome Page":
 #Employment Page
 if page == "Employment Data":
     st.title("Employment Data")
+
+    #create a copy of the DataFrame
+    empl_df = sorted_df
+
+    #convert 'year' from a string to a number to be able to apply a filter
+    empl_df['year'] = pd.to_numeric(empl_df['year'])
+
+    #create a slider to filter the data
+    year_range = st.slider(
+    'Filter data by year:',
+    min_value=int(sorted_df['year'].min()),
+    max_value=int(sorted_df['year'].max()),
+    value=(int(sorted_df['year'].min()), int(sorted_df['year'].max()))
+    )
+
+    #create a filtered copy of the DataFrame for the Employment Data page
+    empl_df = empl_df[(empl_df['year'] >= year_range[0]) & (empl_df['year'] <= year_range[1])]
+
+    #convert 'year' back to a string to avoid commas in the DataFrame
+    empl_df['year'] = empl_df['year'].astype(str)
+
+    #drop the Unemployment data and 'Date'
+    empl_df.drop(columns=['Civillian Unemployment*','Unemployment Rate', 'Date'], inplace=True)
+
     left_column, right_column = st.columns(2)
     with left_column:
         st.subheader("BLS Employment Data, 1994-Present")
-        st.dataframe(filtered_df)
+        st.dataframe(empl_df)
         st.caption("_*in Thousands_")
 
     with right_column:
         st.subheader("Employment Trends")
-        #st.line_chart(filtered_df, x='Year', y='Unemployment Rate')
+        st.line_chart(empl_df, x='year', y='Civillian Employment*')
         st.caption("This is a caption! Change me or remove me, please!")
 
 #Unemployment Page
 elif page == "Unemployment Data":
     st.title("Unemployment Data")
+
+    #create a copy of the DataFrame
+    unempl_df = sorted_df
+
+    #convert 'year' from a string to a number to be able to apply a filter
+    unempl_df['year'] = pd.to_numeric(unempl_df['year'])
+
+    #create a slider to filter the data
+    year_range = st.slider(
+    'Filter data by year:',
+    min_value=int(sorted_df['year'].min()),
+    max_value=int(sorted_df['year'].max()),
+    value=(int(sorted_df['year'].min()), int(sorted_df['year'].max()))
+    )
+
+    #create a filtered copy of the DataFrame for the Employment Data page
+    unempl_df = unempl_df[(unempl_df['year'] >= year_range[0]) & (unempl_df['year'] <= year_range[1])]
+
+    #convert 'year' back to a string to avoid commas in the DataFrame
+    unempl_df['year'] = unempl_df['year'].astype(str)
+
+    #drop the Employment data and 'Date'
+    unempl_df.drop(columns=['Total Nonfarm Employment*','Civillian Employment*', 'Date'], inplace=True)
+
     left_column, right_column = st.columns(2)
     with left_column:
         st.subheader("BLS Unemployment Data, 1994-Present")
-        st.dataframe(filtered_df)
+        st.dataframe(unempl_df)
         st.caption("_*in Thousands_")
 
     with right_column:
         st.subheader("Unemployment Rate")
-        st.line_chart(filtered_df, x='Year', y='Unemployment Rate')
+        st.line_chart(unempl_df, x='year', y='Unemployment Rate')
         st.caption("This is a caption! Change me or remove me, please!")
-
-#create a copy of the DataFrame with Employment Data only
-#employment_df = sorted_df.copy()
-#employment_df.drop(columns=['Civillian Unemployment*']['Unemployment Rate']['Date'], inplace=True)
-
-#create a copt of the DataFrame with Unemployment Data only
-#unemployment_df = sorted_df.copy()
-#employment_df.drop(columns=['Total Nonfarm Employment*']['Civillian Employment*']['Date'], inplace=True)
+        

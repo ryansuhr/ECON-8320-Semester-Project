@@ -16,7 +16,7 @@ def fetch_bls_data():
     headers = {'Content-type': 'application/json'}
     data = json.dumps({
         "seriesid": ['LNS11000000', 'LNS12000000', 'LNS13000000', 'LNS14000000', 'CES0000000001'],
-        "startyear": "2015", 
+        "startyear": "2020", 
         "endyear": str(current_year)
     })
     response = requests.post(

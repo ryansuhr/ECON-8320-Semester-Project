@@ -9,8 +9,8 @@ st.set_page_config(layout="wide")
 CSV_FILE = "/workspaces/ECON-8320-Semester-Project/bls_data.csv"
 
 #load the data
-if os.path.exists(CSV_FILE):
-    df = pd.read_csv(CSV_FILE)
+if os.path.exists("/workspaces/ECON-8320-Semester-Project/bls_data.csv"):
+    df = pd.read_csv("/workspaces/ECON-8320-Semester-Project/bls_data.csv")
     st.write("Data loaded successfully!")
 else:
     st.error("Data file not found. Please run the update script.")

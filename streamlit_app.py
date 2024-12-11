@@ -6,7 +6,7 @@ import os
 st.set_page_config(layout="wide")
 
 #path to the data file
-CSV_FILE = "data/bls_data.csv"
+CSV_FILE = "/workspaces/ECON-8320-Semester-Project/bls_data.csv"
 
 #load the data
 if os.path.exists(CSV_FILE):

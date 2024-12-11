@@ -85,6 +85,10 @@ if page == "Employment Data":
     #convert 'year' back to a string to avoid commas in the DataFrame
     empl_df['year'] = empl_df['year'].astype(str)
 
+        #create another copy specifically for the graph
+    emgr_df = empl_df
+    emgr_df['Month_Year'] = emgr_df['Date'].dt.strftime('%Y-%m') #format date as YYY-MM
+
     #drop the Unemployment data and 'Date'
     empl_df.drop(columns=['Civillian Unemployment*','Unemployment Rate', 'Date'], inplace=True)
 
@@ -96,7 +100,7 @@ if page == "Employment Data":
 
     with right_column:
         st.subheader("Employment Trends")
-        st.line_chart(empl_df, x='year', y='Civillian Employment*')
+        st.bar_chart(emgr_df, x='Month_Year', y=['Civillian Labor Force*', 'Civillian Employment*', 'Total Nonfarm Employment*'], stack=False )
         st.caption("This is a caption! Change me or remove me, please!")
 
 #Unemployment Page
@@ -117,14 +121,18 @@ elif page == "Unemployment Data":
     value=(int(sorted_df['year'].min()), int(sorted_df['year'].max()))
     )
 
-    #create a filtered copy of the DataFrame for the Employment Data page
+    #create a filtered copy of the DataFrame for the Unemployment Data page
     unempl_df = unempl_df[(unempl_df['year'] >= year_range[0]) & (unempl_df['year'] <= year_range[1])]
 
     #convert 'year' back to a string to avoid commas in the DataFrame
     unempl_df['year'] = unempl_df['year'].astype(str)
 
+     #create another copy specifically for the graph
+    ungr_df = unempl_df
+    ungr_df['Month_Year'] = ungr_df['Date'].dt.strftime('%Y-%m') #format date as YYY-MM
+
     #drop the Employment data and 'Date'
-    unempl_df.drop(columns=['Total Nonfarm Employment*','Civillian Employment*', 'Date'], inplace=True)
+    unempl_df.drop(columns=['Total Nonfarm Employment*','Civillian Employment*','Date'], inplace=True)
 
     left_column, right_column = st.columns(2)
     with left_column:
@@ -134,5 +142,5 @@ elif page == "Unemployment Data":
 
     with right_column:
         st.subheader("Unemployment Rate")
-        st.line_chart(unempl_df, x='year', y='Unemployment Rate')
+        st.line_chart(ungr_df, x='Month_Year', y='Unemployment Rate')
         st.caption("This is a caption! Change me or remove me, please!")

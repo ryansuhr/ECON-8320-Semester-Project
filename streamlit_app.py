@@ -54,10 +54,17 @@ page = st.sidebar.selectbox("Select a page:", ["Welcome Page", "Employment Data"
 
 #Welcome Page
 if page == "Welcome Page":
-    st.title("Howdy, stranger! :face_with_cowboy_hat:")
+    st.title("Welcome to my Streamlit App! :wave:")
     st.write(
-    "Welcome to my Streamlit App! Here, I've compiled and mapped some employment data from the US Bureau of Labor Statistics. If you open the navigation sidebar to your left, you'll see four pages: the first is the Welcome Page (which you're current on). The others are Employment Data, Unemployment Data, and Additional Info. Click on one of those to jump in!"
+    "Here, I've compiled and mapped some employment data from the US Bureau of Labor Statistics. If you open the navigation sidebar to your left, see you'll a drop-down menu with four pages:"
     )
+    st.markdown("""
+    - **Welcome Page**:wave: (_you are here_)
+    - **Employment Data**:chart_with_upwards_trend:
+    - **Unemployment Data**:chart_with_downwards_trend:
+    - **Additional Info**:book:
+    """)
+    st.write("Click on one of these to jump in!")
 #Employment Page
 if page == "Employment Data":
     st.title("Employment Data")
@@ -142,9 +149,9 @@ elif page == "Unemployment Data":
 
 #Additional Info
 elif page == "Additional Info":
-    st.title("Additional Info :book:")
+    st.title("Additional Info:book:")
     st.write(
     "For more employment data and resources, please visit:"
     )
     st.link_button("BLS Website", 'https://www.bls.gov/')
-    st.write("_Thank you!_")
+    st.write("_Thank you for visiting!_")

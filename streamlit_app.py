@@ -5,13 +5,10 @@ import os
 #enable wide mode
 st.set_page_config(layout="wide")
 
-#path to the data file
-CSV_FILE = "/workspaces/ECON-8320-Semester-Project/bls_data.csv"
-
 #load the data
 if os.path.exists("/workspaces/ECON-8320-Semester-Project/bls_data.csv"):
     df = pd.read_csv("/workspaces/ECON-8320-Semester-Project/bls_data.csv")
-    st.write("Data loaded successfully!")
+    #st.write("Data loaded successfully!")
 else:
     st.error("Data file not found. Please run the update script.")
 
@@ -44,7 +41,7 @@ sorted_df.rename(columns={
     'LNS11000000': 'Civillian Labor Force*',
     'LNS12000000': 'Civillian Employment*',
     'LNS13000000': 'Civillian Unemployment*',
-    'LNS14000000': 'Unemployment Rate',
+    'LNS14000000': 'Unemployment Rate (%)',
     'CES0000000001': 'Total Nonfarm Employment*'
     }, inplace=True)
 
@@ -53,13 +50,13 @@ sorted_df['year'] = pd.to_numeric(sorted_df['year'])
 
 #create a sidebar navigation
 st.sidebar.title("Navigation")
-page = st.sidebar.selectbox("Select a page:", ["Welcome Page", "Employment Data", "Unemployment Data"])
+page = st.sidebar.selectbox("Select a page:", ["Welcome Page", "Employment Data", "Unemployment Data", "Additional Info"])
 
 #Welcome Page
 if page == "Welcome Page":
     st.title("Howdy, stranger! :face_with_cowboy_hat:")
     st.write(
-        "Hello, and welcome to my page! Here, I've compiled some employment data from the US Bureau of Labor Statistics. If you use the navigation sidebar to your left, you'll see two pages: one is Employment Data and the other Unemployment Data. Click on one of those to start exploring. Giddy-up!"
+    "Welcome to my Streamlit App! Here, I've compiled and mapped some employment data from the US Bureau of Labor Statistics. If you open the navigation sidebar to your left, you'll see four pages: the first is the Welcome Page (which you're current on). The others are Employment Data, Unemployment Data, and Additional Info. Click on one of those to jump in!"
     )
 #Employment Page
 if page == "Employment Data":
@@ -85,23 +82,22 @@ if page == "Employment Data":
     #convert 'year' back to a string to avoid commas in the DataFrame
     empl_df['year'] = empl_df['year'].astype(str)
 
-        #create another copy specifically for the graph
-    emgr_df = empl_df
-    emgr_df['Month_Year'] = emgr_df['Date'].dt.strftime('%Y-%m') #format date as YYY-MM
+    #create another copy specifically for the graph
+    emgr_df = empl_df.copy()
+    emgr_df['Year-Month'] = emgr_df['Date'].dt.strftime('%Y-%m') #format date as YYY-MM
 
     #drop the Unemployment data and 'Date'
-    empl_df.drop(columns=['Civillian Unemployment*','Unemployment Rate', 'Date'], inplace=True)
+    empl_df.drop(columns=['Civillian Unemployment*','Unemployment Rate (%)', 'Date'], inplace=True)
 
     left_column, right_column = st.columns(2)
     with left_column:
-        st.subheader("BLS Employment Data, 1994-Present")
+        st.subheader("BLS Employment Data, 1994-2003")
         st.dataframe(empl_df)
         st.caption("_*in Thousands_")
 
     with right_column:
         st.subheader("Employment Trends")
-        st.bar_chart(emgr_df, x='Month_Year', y=['Civillian Labor Force*', 'Civillian Employment*', 'Total Nonfarm Employment*'], stack=False )
-        st.caption("This is a caption! Change me or remove me, please!")
+        st.area_chart(emgr_df, x='Year-Month', y=['Civillian Labor Force*', 'Civillian Employment*', 'Total Nonfarm Employment*'], x_label="Year & Month")
 
 #Unemployment Page
 elif page == "Unemployment Data":
@@ -127,20 +123,28 @@ elif page == "Unemployment Data":
     #convert 'year' back to a string to avoid commas in the DataFrame
     unempl_df['year'] = unempl_df['year'].astype(str)
 
-     #create another copy specifically for the graph
-    ungr_df = unempl_df
-    ungr_df['Month_Year'] = ungr_df['Date'].dt.strftime('%Y-%m') #format date as YYY-MM
+    #create another copy specifically for the graph
+    ungr_df = unempl_df.copy()
+    ungr_df['Year-Month'] = ungr_df['Date'].dt.strftime('%Y-%m') #format date as YYY-MM
 
     #drop the Employment data and 'Date'
-    unempl_df.drop(columns=['Total Nonfarm Employment*','Civillian Employment*','Date'], inplace=True)
+    unempl_df.drop(columns=['Total Nonfarm Employment*','Civillian Employment*','Date'], inplace=True) 
 
     left_column, right_column = st.columns(2)
     with left_column:
-        st.subheader("BLS Unemployment Data, 1994-Present")
+        st.subheader("BLS Unemployment Data, 1994-2003")
         st.dataframe(unempl_df)
         st.caption("_*in Thousands_")
 
     with right_column:
         st.subheader("Unemployment Rate")
-        st.line_chart(ungr_df, x='Month_Year', y='Unemployment Rate')
-        st.caption("This is a caption! Change me or remove me, please!")
+        st.line_chart(ungr_df, x='Year-Month', y='Unemployment Rate (%)', x_label="Year & Month")
+
+#Additional Info
+elif page == "Additional Info":
+    st.title("Additional Info :book:")
+    st.write(
+    "For more employment data and resources, please visit:"
+    )
+    st.link_button("BLS Website", 'https://www.bls.gov/')
+    st.write("_Thank you!_")

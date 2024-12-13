@@ -6,8 +6,8 @@ import os
 st.set_page_config(layout="wide")
 
 #load the data
-if os.path.exists("/workspaces/ECON-8320-Semester-Project/bls_data.csv"):
-    df = pd.read_csv("/workspaces/ECON-8320-Semester-Project/bls_data.csv")
+if os.path.exists("bls_data.csv"):
+    df = pd.read_csv("bls_data.csv")
     #st.write("Data loaded successfully!")
 else:
     st.error("Data file not found. Please run the update script.")
@@ -98,7 +98,7 @@ if page == "Employment Data":
 
     left_column, right_column = st.columns(2)
     with left_column:
-        st.subheader("BLS Employment Data, 1994-2003")
+        st.subheader("BLS Employment Data, 2020-Present")
         st.dataframe(empl_df)
         st.caption("_*in Thousands_")
 
@@ -139,7 +139,7 @@ elif page == "Unemployment Data":
 
     left_column, right_column = st.columns(2)
     with left_column:
-        st.subheader("BLS Unemployment Data, 1994-2003")
+        st.subheader("BLS Unemployment Data, 2020-Present")
         st.dataframe(unempl_df)
         st.caption("_*in Thousands_")
 

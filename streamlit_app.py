@@ -20,7 +20,6 @@ if 'year' not in pivoted_df.index.names or 'month' not in pivoted_df.index.names
     raise ValueError("The pivot operation failed to include 'year' or 'month' in the index.")
 
 #create a 'Date' column for chronological sorting
-pivoted_df = pivoted_df.reset_index() #ADDED 12/13-------->
 pivoted_df['Date'] = pd.to_datetime(pivoted_df.index.get_level_values('year').astype(str)
     + '-'
     + pivoted_df.index.get_level_values('month').astype(str))
@@ -48,7 +47,6 @@ sorted_df.rename(columns={
 
 #convert 'year' from a string to a number to be able to apply a filter
 sorted_df['year'] = pd.to_numeric(sorted_df['year'], errors='coerce')
-sorted_df['month'] = sorted_df['month'].astype(str).str.zfill(2) #add a leading zero to single-digit months to ensure safe conversion #ADDED 12/13-------->
 
 #create a sidebar navigation
 st.sidebar.title("Navigation")

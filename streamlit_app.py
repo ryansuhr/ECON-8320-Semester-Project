@@ -54,12 +54,12 @@ page = st.sidebar.selectbox("Select a page:", ["Welcome Page", "Employment Data"
 
 #Welcome Page
 if page == "Welcome Page":
-    st.title("Welcome to my Streamlit App! :wave:")
+    st.title("Welcome to my Streamlit App!:wave:")
     st.write(
     "Here, I've compiled and mapped some employment data from the US Bureau of Labor Statistics. If you open the navigation sidebar to your left, see you'll a drop-down menu with four pages:"
     )
     st.markdown("""
-    - **Welcome Page**:wave: (_you are here_)
+    - **Welcome Page**:smiley: (_you are here_)
     - **Employment Data**:chart_with_upwards_trend:
     - **Unemployment Data**:chart_with_downwards_trend:
     - **Additional Info**:book:

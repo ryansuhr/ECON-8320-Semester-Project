@@ -4,20 +4,16 @@ import pandas as pd
 import datetime
 import os
 
-# File paths
-CACHE_FILE = "bls_data.json"
-CSV_FILE = "bls_data.csv"
+#file path
+CSV_FILE = ("bls_data.csv")
 
-# Current year
-current_year = datetime.datetime.now().year
-
-# Function to fetch data from the BLS API
-def fetch_bls_data():
+#function to fetch data from the BLS API
+def fetch_bls_data(start_year, end_year):
     headers = {'Content-type': 'application/json'}
     data = json.dumps({
         "seriesid": ['LNS11000000', 'LNS12000000', 'LNS13000000', 'LNS14000000', 'CES0000000001'],
-        "startyear": "2020", 
-        "endyear": str(current_year)
+        "startyear": str(start_year), 
+        "endyear": str(end_year)
     })
     response = requests.post(
         'https://api.bls.gov/publicAPI/v1/timeseries/data/',
@@ -27,7 +23,7 @@ def fetch_bls_data():
     response.raise_for_status()
     return response.json()
 
-# Function to parse BLS JSON data
+#function to parse BLS JSON data
 def parse_bls_json(json_data):
     period_to_month = {
         'M01': 'January', 'M02': 'February', 'M03': 'March', 'M04': 'April',
@@ -38,11 +34,11 @@ def parse_bls_json(json_data):
     for series in json_data['Results']['series']:
         series_id = series['seriesID']
         for item in series['data']:
-            year = item['year']
+            year = int(item['year'])
             period = item['period']
-            value = item['value']
+            value = float(item['value'])
             month = period_to_month.get(period)
-            if month:  # Skip non-month periods
+            if month:  #skip non-month periods
                 parsed_data.append({
                     "series_id": series_id,
                     "year": year,
@@ -51,22 +47,36 @@ def parse_bls_json(json_data):
                 })
     return pd.DataFrame(parsed_data)
 
-def main():
-    try:
-        # Fetch and parse data
-        json_data = fetch_bls_data()
-        df = parse_bls_json(json_data)
-        
-        # Save the cache with timestamp
-        cache = {"last_updated": datetime.datetime.now().strftime("%Y-%m-%d"), "data": json_data}
-        with open(CACHE_FILE, "w") as f:
-            json.dump(cache, f)
+#function to fetch and append data to CSV
+def fetch_and_append_data():
+    #determine the start year
+    if os.path.exists(CSV_FILE):
+        existing_df = pd.read_csv(CSV_FILE)
+        existing_years = existing_df['year'].astype(int)
+        start_year = existing_years.max() + 1
+    else:
+        start_year = 2020
 
-        # Save to CSV
-        df.to_csv(CSV_FILE, index=False)
-        print("Data updated successfully!")
-    except Exception as e:
-        print(f"Failed to update data: {e}")
+    #determine the end year for the API request
+    current_year = datetime.datetime.now().year
+    end_year = min(start_year + 9, current_year)
 
+    #fetch new data
+    print(f"Fetching data for years {start_year} to {end_year}...")
+    json_data = fetch_bls_data(start_year, end_year)
+    new_data_df = parse_bls_json(json_data)
+
+    #append new data and remove duplicates
+    if os.path.exists(CSV_FILE):
+        existing_df = pd.read_csv(CSV_FILE)
+        combined_df = pd.concat([existing_df, new_data_df]).drop_duplicates(subset=['series_id', 'year', 'month'])
+    else:
+        combined_df = new_data_df
+
+    #save the combined data back to the CSV file
+    combined_df.to_csv(CSV_FILE, index=False)
+    print(f"Data updated! Added records from {start_year} to {end_year}.")
+
+#main function to trigger the process
 if __name__ == "__main__":
-    main()
+    fetch_and_append_data()

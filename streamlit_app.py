@@ -56,7 +56,7 @@ page = st.sidebar.selectbox("Select a page:", ["Welcome Page", "Employment Data"
 if page == "Welcome Page":
     st.title("Welcome to my Streamlit App!:wave:")
     st.write(
-    "Here, I've compiled and mapped some employment data from the US Bureau of Labor Statistics. If you open the navigation sidebar to your left, see you'll a drop-down menu with four pages:"
+    "Here, I've compiled and mapped some employment data from the US Bureau of Labor Statistics. Below is a list of the pages in this app."
     )
     st.markdown("""
     - **Welcome Page**:smiley: (_you are here_)
@@ -64,7 +64,7 @@ if page == "Welcome Page":
     - **Unemployment Data**:chart_with_downwards_trend:
     - **Additional Info**:book:
     """)
-    st.write("Click on one of these to jump in!")
+    st.write("If you open the navigation sidebar to the left, you'll see all four of these pages titles in the drop-down menu. Select one to jump into that page!")
 #Employment Page
 if page == "Employment Data":
     st.title("Employment Data")
